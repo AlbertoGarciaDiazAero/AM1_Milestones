@@ -8,7 +8,7 @@
   3. Runge Kutta - 4 
   4. Comparación esquemas
   
-  Voy a procurar seguir Pep-8
+  Voy a procurar seguir Pep-8. Por costumbre también.
 
   Alberto García Díaz
 '''
@@ -230,7 +230,7 @@ plt.legend()
 plt.grid(True)
 plt.show()
 
-##Comparación RK4 vs CrNi
+##Comparación RK4 vs CrNi, en el plot completo se ve poquito
 plt.figure(figsize=(6,6))
 plt.plot(x_rk4, y_rk4, 'r-', label="RK4")
 plt.plot(valores_x_CN, valores_y_CN, 'g-', label ="CrNi")
