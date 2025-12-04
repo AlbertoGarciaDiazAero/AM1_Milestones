@@ -42,11 +42,15 @@ def LinearOscillator(U, t=0):
     v = U[1]
     return np.array([v, -x])
 
+def oscillator(U, t):
+    x, y = U
+    return np.array([ y, -x ])
+
 
 def NBody(U, t, masses, G=1.0):
     """
     Gravitational N-body problem in 2D.
-    U = [x1, y1, vx1, vy1, ..., xN, yN, vxN, vyN]
+    U = [x1, y1, x2, y2, ..., vx1, vy1, ..., vxN, vyN]
     masses: array-like of length N
     G: gravitational constant (scaled by convenience)
     """
@@ -70,3 +74,71 @@ def NBody(U, t, masses, G=1.0):
     # Ensamblar derivada U' = (v, a)
     dUdt = np.concatenate((v.flatten(), a.flatten()))
     return dUdt
+
+
+
+def N_body2(U, t, Nb, Nc, Nv=2):
+    # U: vector plano de tamaño Nb*Nc*Nv
+
+    # ----- Vistas sobre U -----
+    Xs = U.reshape(Nb, Nc, Nv)   # (Nb, Nc, 2)
+    r  = Xs[:, :, 0]             # posiciones (Nb, Nc)  -> vista
+    v  = Xs[:, :, 1]             # velocidades (Nb, Nc) -> vista
+
+    # ----- Creamos F y sus vistas -----
+    F  = np.zeros_like(U)        # derivada dU/dt plana
+    Fs = F.reshape(Nb, Nc, Nv)   # (Nb, Nc, 2)
+    drdt = Fs[:, :, 0]           # vista dentro de F
+    dvdt = Fs[:, :, 1]           # vista dentro de F
+
+    # ----- Ecuaciones -----
+    for i in range(Nb):
+        # dr/dt = v
+        drdt[i, :] = v[i, :]
+
+        # dv/dt = suma de atracciones
+        for j in range(Nb):
+            if i != j:
+                rij  = r[j, :] - r[i, :]
+                dist = np.linalg.norm(rij)
+                dvdt[i, :] += rij / dist**3
+
+    return F
+
+
+def restricted_3body_F(U, t, mu):
+    """
+    Circular Restricted Three Body Problem (planar, normalizado).
+    U = [x, y, vx, vy] en un marco rotante.
+    mu = m2 / (m1 + m2)
+    """
+
+    U = np.asarray(U, dtype=float)
+
+    # Vista 2x2 sobre U: eje 0 -> coord (x,y), eje 1 -> (pos, vel)
+    Xs = U.reshape(2, 2)     # [[x, vx],
+                             #  [y, vy]]
+    r  = Xs[:, 0]            # [x, y]
+    v  = Xs[:, 1]            # [vx, vy]
+
+    # Derivadas (mismas vistas sobre F)
+    F  = np.zeros_like(U)
+    Fs = F.reshape(2, 2)
+    drdt = Fs[:, 0]          # dx/dt, dy/dt
+    dvdt = Fs[:, 1]          # dvx/dt, dvy/dt
+
+    x, y   = r
+    vx, vy = v
+
+    # Distancias a los primarios en el sistema normalizado
+    r1 = np.sqrt((x + mu)**2       + y**2)
+    r2 = np.sqrt((x - 1 + mu)**2   + y**2)
+
+    # Ecuaciones del CR3BP en marco rotante
+    drdt[0] = vx
+    drdt[1] = vy
+
+    dvdt[0] = 2*vy + x - ((1-mu)*(x + mu))/r1**3 - (mu*(x - (1-mu)))/r2**3
+    dvdt[1] = -2*vx + y - ((1-mu)*y)/r1**3       - (mu*y)/r2**3
+
+    return F

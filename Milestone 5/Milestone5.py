@@ -20,14 +20,14 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
 from Modules.temporal_schemes import Esquema, Cauchy_problem
 from Modules.dynamic_functions import Kepler, LinearOscillator, NBody
 
+
 for k in Esquema.keys():
     print(k)
-
 
 G = 1.0
 masses = np.array([1.0, 1.1, 1.0])
 
-# Condiciones iniciales (configuración triangular)
+# Condiciones iniciales (configuración triangular) ((Intento porque claramente están en orden incorrecto jajajaj))
 U0 = np.array([
      1.0,  0.0,   0.0,  0.5,
     -0.5,  0.866, 0.0, -0.5,
@@ -40,13 +40,13 @@ t = np.linspace(0.0, T, N)
 
 
 
-method = Esquema["Leap_Frog"]
+method = Esquema["Leap_Frog_Velocity_Verlet"]
 
 U = Cauchy_problem(
     lambda U,t: NBody(U, t, masses, G),
     U0,
     t,
-    temporal_scheme=method,
+    scheme=method,
     jacobian_tol=1e-9,
     N_max=10000,
     newton_tol=1e-9,
@@ -125,11 +125,11 @@ plt.show()
 
 # --- Parámetros figure-eight 3 cuerpos ---
 G = 1.0
-masses = np.array([1.0, 1.0, 1.0])
+masses = np.array([1.0, 1.21, 1.0])
 N_bodies = len(masses)
 
 # Condiciones iniciales  de Chenciner & Montgomery
-x0  = 0.97000436
+x0  = 0.98000436
 y0  = -0.24308753
 vx0 = 0.4662036850
 vy0 = 0.4323657300
@@ -154,14 +154,14 @@ T = n_periods * T_per
 N = 40000              # dt ~  T/N suficientemente pequeño
 t = np.linspace(0.0, T, N)
 
-method = Esquema["Leap_Frog"]   # o "RK4", pero Leap_Frog conserva mejor
+method = Esquema["RK4"]   # o "RK4", pero Leap_Frog conserva mejor
 
 
 U = Cauchy_problem(
     lambda U, tt: NBody(U, tt, masses, G),
     U0,
     t,
-    temporal_scheme=method,
+    scheme=method,
     jacobian_tol=1e-9,
     N_max=10000,
     newton_tol=1e-9,
@@ -242,3 +242,24 @@ anim = FuncAnimation(
 )
 
 plt.show()
+
+E_Lagrange_RK4 = np.array([
+    energia_nbody(U[k], masses, G) for k in range(N)
+])
+
+plt.figure()
+plt.plot(t, E_Lagrange_RK4)
+plt.xlabel("t")
+plt.ylabel("E(t)")
+plt.title("Energía total – caso Lagrange (3 cuerpos, RK4)")
+plt.grid(True)
+plt.show()
+
+print("E(0)        =", E_Lagrange_RK4[0])
+print("E min       =", E_Lagrange_RK4.min())
+print("E max       =", E_Lagrange_RK4.max())
+print("ΔE = max-min =", E_Lagrange_RK4.max() - E_Lagrange_RK4.min())
+print("Error rel   =", (E_Lagrange_RK4.max() - E_Lagrange_RK4.min())
+                       / abs(E_Lagrange_RK4.mean()))
+
+## Apuntes del ticher (Mirar su github)

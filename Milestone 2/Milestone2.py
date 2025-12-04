@@ -73,6 +73,8 @@ metodos = {
     "RK4":          Esquema["RK4"],
     "CN":           Esquema["Crank_Nicolson"],
     "EulerInverso": Esquema["Inverse_Euler"],
+    "Leap_Frog_Velocity_Verlet": Esquema["Leap_Frog_Velocity_Verlet"],
+    "Leap_Frog": Esquema["Leap_Frog"],   
 }
 
 soluciones = {}

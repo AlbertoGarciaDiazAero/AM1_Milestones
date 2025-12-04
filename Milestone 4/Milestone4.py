@@ -1,3 +1,4 @@
+
 ## Imports
 
 # Librerías estándar
@@ -16,33 +17,34 @@ from pathlib import Path
 
 # Clases propias necesarias
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../'))) #Sube un nivel, donde está "Modules"
-from Modules.temporal_schemes import Esquema, Cauchy_problem
+from Modules.temporal_schemes import Esquema, Cauchy_problem, Esquema_s
 from Modules.dynamic_functions import Kepler, LinearOscillator
+from Modules.Math import Stability_Region
 
 
 #Condición inicial, generalidades, etc.
 U0 = np.array([1.0, 0.0])   # x(0)=1, v(0)=0
-T = 20.0                    # por ejemplo
-N = 1000
+T = 200.0                    # Subido a 200 para analizar cuestiones energéticas (Euler aumenta, Inverso decrece, . . .)
+N = 10000
 t = np.linspace(0.0, T, N)
 
-methods = {
-    "Euler":        "Euler",
-    "EulerInverso": "Inverse_Euler",
-    "LeapFrog":     "Leap_Frog",
-    "CrankNicolson":"Crank_Nicolson",
-    "RK4":          "RK4",
+methods = { #A ver se puede usar Esquemas, pongo esto por definir menos métodos o whatever
+    "Euler":        Esquema["Euler"],
+    "EulerInverso": Esquema["Inverse_Euler"],
+    "LeapFrog":     Esquema["Leap_Frog"],
+    "CrankNicolson":Esquema["Crank_Nicolson"],
+    "RungeKutta4":          Esquema["RK4"],
 }
 
 
 sols = {}
 
-for name, key in methods.items():
+for name, esquema in methods.items():
     U = Cauchy_problem(
         LinearOscillator,
         U0,
         t,
-        temporal_scheme=key,
+        scheme=esquema,
         jacobian_tol=1e-9,
         N_max=10000,
         newton_tol=1e-9,
@@ -72,7 +74,7 @@ for name, key in methods.items():
 
 
 ############################
-# Stability functions R(z)
+# Stability functions R(z). Añadido método general en Math.py
 ############################
 
 def R_euler(z):
@@ -165,3 +167,17 @@ metodos_stab = ["Euler", "Inverse_Euler", "Leap_Frog", "Crank_Nicolson", "RK4"]
 
 for m in metodos_stab:
     plot_stability_region(m, xlim=(-4, 4), ylim=(-4, 4), npts=400, dt_mark=dt)
+
+
+## Regiones de estabilidad mediante la ecuación característica. Función "Stability_Region" de Modules.Math
+## es como resuelve J.A.
+## Estoy trabajando en ello todvía, poco a poco
+
+
+for nombre, scheme in Esquema_s.items():
+    print("Región de estabilidad:", nombre)
+    rho, x, y = Stability_Region(scheme, 150, -4, 4, -4, 4)
+    plt.contour(x, y, rho.T, levels=np.linspace(0,1,11))
+    plt.axis("equal")
+    plt.grid()
+    plt.show()
